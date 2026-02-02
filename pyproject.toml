@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pace-station-extractor"
+version = "0.1.0"
+description = "Extracts OCI Rrs and Rrc spectra from PACE L2 granules for fixed stations."
+requires-python = "==3.12"
+dependencies = [
+    "earthaccess",
+    "xarray",
+    "numpy",
+    "pandas",
+    "tqdm",
+    "netCDF4",
+    "h5netcdf"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
