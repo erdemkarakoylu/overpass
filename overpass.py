@@ -8,7 +8,7 @@ from loguru import logger
 
 from tqdm import tqdm
 
-class PaceExtractor:
+class OverpassExtractor:
     def __init__(self, output_dir="pace_data", batch_size=50):
         """
         Initializes the extractor with a focus on batch processing and resumption.
@@ -20,7 +20,7 @@ class PaceExtractor:
         self.output_dir = Path(output_dir)
         self.batch_size = batch_size
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Initialized PaceExtractor with output directory: {self.output_dir}")
+        logger.info(f"Initialized OverpassExtractor | Directory: {self.output_dir}")
     
     def find_granules(self, product_type:str, lat:float, lon:float, temporal_range:tuple[str, str]):
         """
