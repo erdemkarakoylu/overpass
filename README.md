@@ -1,53 +1,75 @@
-# PACE Station Extractor
+# Overpass
 
 A robust Python utility to search, download, and extract hyperspectral Remote Sensing Reflectance ($R_{rs}$) and Rayleigh-Corrected Reflectance ($R_{rc}$) from NASA PACE OCI Level 2 data for fixed sampling stations.
 
 ## Features
-- **Resume Capability**: Skips stations and product types that have already been successfully processed.
+- **Structured Logging**: Uses `loguru` for clear, checkpoint-aware status reporting.
+- **Resume Capability**: Automatically skips stations and products that are already complete by checking for final files and checkpoints.
 - **Batch Processing**: Periodically saves data to disk during long extractions to prevent memory-related kernel crashes.
-- **Hyperspectral Support**: Extracts the full OCI spectra (UV to NIR) for specific coordinates.
-- **Product Choice**: Easily switch between standard $R_{rs}$ and coastal-optimized $R_{rc}$.
+- **Hyperspectral Support**: Extracts full OCI spectra (UV to NIR) for specific coordinates.
+- **Coastal Optimized**: Provides utilities to handle $R_{rc}$ data and custom flag filtering for turbid waters.
 
 ## Prerequisites
-- **Python 3.12**: This project is optimized for 3.12. (Note: Issues have been observed with NASA data backends on Python 3.13).
-- **NASA Earthdata Account**: You must have a login to access PACE data.
+- **Python 3.12**: This project is strictly optimized for 3.12 due to stability issues with NASA backends on Python 3.13.
+- **NASA Earthdata Account**: [Register here](https://urs.earthdata.nasa.gov/) to access PACE data.
 
 ## Installation
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/your-username/pace-station-extractor.git](https://github.com/your-username/pace-station-extractor.git)
-   cd pace-station-extractor
-   ```
 
-2. Optionally create and activate an environment (Conda or venv):
+
+### 1. Create Environment
 ```bash
-conda create -n pace_env python=3.12
-conda activate pace_env
+conda create -n overpass_env python=3.12 -y
+conda activate overpass_env
 ```
 
-3. Install dependencies:
+### 2. Clone & Install
 ```bash
+git clone [https://github.com/your-username/overpass.git](https://github.com/your-username/overpass.git)
+cd overpass
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Usage
-1. Login: Authenticate with NASA Earthdata
+
+### 1. Login to Earthdata
 ```python
 import earthaccess
 earthaccess.login()
 ```
-2. Run Extraction: Use the PaceExtractor class in your notebook or script:
+
+### 2. Extract Data
 ```python
-from pace_station_extractor import PaceExtractor
-extractor = PaceExtractor(output_dir="my_pace_files", batch_size=20)
-granules = extractor.find_granules("Rrc", lat=32.867, lon=-117.257, temporal=("2024-04-11", "2024-12-31"))
-extractor.extract_and_save("SIO", granules, lat=32.867, lon=-117.257, product_type="Rrc")
+from overpass import OverpassExtractor, filter_rrc
+
+# Initialize extractor (saves a checkpoint every 20 scenes)
+extractor = OverpassExtractor(output_dir="data_output", batch_size=20)
+
+# Station Coordinates (e.g., Scripps Pier)
+lat, lon = 32.867, -117.257
+
+# Search for Rayleigh-Corrected granules
+granules = extractor.find_granules("Rrc", lat, lon, temporal=("2024-04-11", "2026-01-30"))
+
+# Extract and Save (handles batching and resuming automatically)
+final_path = extractor.extract_and_save("SIO", granules, lat, lon, "Rrc")
 ```
-3. Run: Execute the extraction script
-4. Review: Check the output files for your data
+
+### 3. Coastal Filtering
+```python
+import xarray as xr
+
+if final_path:
+    ds = xr.open_dataset(final_path)
+    # Use the helper to mask land, clouds, and saturated pixels
+    # This keeps valid coastal spectra that standard L2 flags might over-mask
+    ds_clean = filter_rrc(ds)
+```
 
 ## Project Structure
-* `pace_extractor.py`: Main extraction logic
-* `main.py`: Entry point for processing multiple stations from a CSV.
-* `requirements.txt`: Python dependencies
-* `README.md`: This file
+- `overpass.py`: Core library containing `OverpassExtractor` class and `filter_rrc` utility.
+- `main.py`: Entry point for batch processing stations from a CSV (e.g., CalHABMAP).
+- `tests/`: Unit tests using dummy data to verify checkpoint and resume logic.
+
+## License
+MIT
