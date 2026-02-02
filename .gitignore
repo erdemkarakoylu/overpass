@@ -3,3 +3,9 @@ __pycache__
 .DS_Store
 output/
 *.json
+*.egg-info
+*.js
+*.css
+*.html
+*.lock
+*.woff
